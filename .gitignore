@@ -1,0 +1,53 @@
+# secrets
+**/.env
+!.env.example
+!**/.env.example
+**/.env.local
+**/.env.*.local
+**/secrets.json
+**/secrets.*.json
+.word-switch-v2/
+.word-switch/
+
+# python cache
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+env/
+build/
+dist/
+release/
+
+# logs
+*.log
+*.err
+*.tmp
+*.bak
+
+# local config
+.claude/
+
+# local Office/gateway runtime files
+word-deepseek-manifest.xml
+start.ps1
+start-word-fixed.ps1
+WORD_AI_SWITCH_V2_REDESIGN.md
+WORD_AI_SWITCH_V2_REDESIGN_CN.md
+
+# node / editor
+node_modules/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# binaries / local tunnel files
+cloudflared.exe
+cloudflared
+*.pem
+*.cert
