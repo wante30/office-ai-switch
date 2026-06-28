@@ -106,6 +106,50 @@ powershell -ExecutionPolicy Bypass -File .\word-switch-v2-gui.ps1
 
 推荐用命名 tunnel，这样重启后域名不会变。
 
+### 4.1 没有域名时：临时 trycloudflare 试用
+
+新用户不需要先买域名。项目自带本地 FastAPI 网关，缺的是一个 Office 加载项能访问的 HTTPS 入口。最快试用方式是 Cloudflare 临时 tunnel：
+
+```powershell
+cloudflared tunnel --url http://127.0.0.1:8790
+```
+
+命令启动后会打印一个临时地址，形如：
+
+```text
+https://example-random-words.trycloudflare.com
+```
+
+把这个地址当作 Enterprise Gateway URL。它不需要你拥有域名，但有两个限制：
+
+1. 每次重启 tunnel，地址可能变化。
+2. 地址变化后，需要重新替换 manifest 里的 `gateway_url` 并重新侧载加载项。
+
+建议同时给公网入口设置网关访问 token。编辑 `gateway_unified\.env`：
+
+```env
+GATEWAY_ACCESS_TOKEN=change-this-to-a-long-random-token
+OFFICE_AI_PUBLIC_URL=https://example-random-words.trycloudflare.com
+```
+
+然后把 manifest 里的 `gateway_token=your-gateway-token` 替换成同一个 token。
+
+URL 编码可以用 PowerShell：
+
+```powershell
+[uri]::EscapeDataString("https://example-random-words.trycloudflare.com")
+```
+
+得到的编码值替换 manifest 里的：
+
+```text
+https%3A%2F%2Fword.example.com
+```
+
+临时 tunnel 适合先跑通 Word / Excel / PowerPoint 加载项；长期使用再配置命名 tunnel + 自有域名。
+
+### 4.2 有域名时：命名 tunnel 稳定部署
+
 登录：
 
 ```powershell
