@@ -43,7 +43,7 @@ Windows 用户可以直接下载 Release 包：
 
 Claude for Microsoft Office 官方加载项需要填写 Enterprise Gateway URL，通常适合 **Claude Pro / Max 订阅用户** 或拥有官方 Anthropic API Key 的用户。但官方订阅和 API 调用费用相对较高。
 
-本项目自研了一个**本地 Anthropic 兼容网关**，允许用户使用价格更亲民的第三方模型（DeepSeek、Kimi、MiMo 等）进行接入。实际使用中，**大多数场景下体验与官方差距不大**，同时支持：
+**本项目** 在现有网关基础上进行开发，提供了 **Windows 桌面 GUI + 配置管理套件**，让用户可以**一键切换上游供应商**，大幅降低使用成本，同时保持较好的使用体验。
 
 - 一键切换不同供应商
 - 批量测试 Key 可用性
@@ -223,6 +223,8 @@ python word-switch-v2.py init
 
 ### 4.3 启动 GUI
 
+首次使用GUI、导出 manifest.xml、导入 Word / Excel / PowerPoint 的步骤见 [USER_GUIDE.md](USER_GUIDE.md)。
+
 ```powershell
 # 方式 1：双击或右键"使用 PowerShell 运行"
 .\word-switch-v2-gui.ps1
@@ -239,6 +241,8 @@ powershell -ExecutionPolicy Bypass -File .\word-switch-v2-gui.ps1
 4. 点「保存配置」→「保存 Key」→「测试选中配置」。
 5. 测试通过后点「应用到 Word 网关」，等待 gateway + tunnel 重启。
 6. 状态栏显示「当前启用：xxx」后，打开 Word / Excel / PowerPoint 中的 Claude 加载项即可使用。
+   
+具体详细步骤见 [USER_GUIDE.md](USER_GUIDE.md)。
 
 ### 4.5 仅启动网关（不需要 GUI）
 
