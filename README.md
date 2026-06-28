@@ -39,9 +39,16 @@ Windows 用户可以直接下载 Release 包：
 
 ## 1. 项目简介
 
-`Office AI Switch` 解决一个很现实的问题：**Claude 的 Office 加载项只能填一个 Enterprise Gateway URL，但用户往往同时拥有多家 API 供应商的 Key，想在 Word / Excel / PowerPoint 里随时切换、批量测试、稳定使用**。
+`Office AI Switch` 解决了一个很现实的问题：
 
-项目早期名为 `Word AI Switch v2`，当前脚本仍保留 `word-switch-v2.py` / `word-switch-v2-gui.ps1` 文件名，避免破坏已有用户环境。对外开源名称建议使用 **Office AI Switch**。
+Claude for Microsoft Office 官方加载项需要填写 Enterprise Gateway URL，通常适合 **Claude Pro / Max 订阅用户** 或拥有官方 Anthropic API Key 的用户。但官方订阅和 API 调用费用相对较高。
+
+本项目自研了一个**本地 Anthropic 兼容网关**，允许用户使用价格更亲民的第三方模型（DeepSeek、Kimi、MiMo 等）进行接入。实际使用中，**大多数场景下体验与官方差距不大**，同时支持：
+
+- 一键切换不同供应商
+- 批量测试 Key 可用性
+- 模型映射与 Web Search 功能
+- 自定义 Skill / 工具调用
 
 本项目把"切供应商"从手改 `.env` + 重启服务，变成 GUI 一次点击：
 
@@ -62,7 +69,7 @@ Windows 用户可以直接下载 Release 包：
 
 ### 1.2 它不适合谁
 
-- 只想用官方 Claude API、不需要切换的人（直接用官方加载项即可）。
+- 拥有Claude订阅/API、不需要降低成本的人（直接用官方加载项即可）。
 - 想要 Linux/macOS 桌面 GUI 的人（当前 GUI 是 WinForms + PowerShell，仅 Windows）。
 - 想要 100% 协议覆盖（Gemini Native、OpenAI Responses 等非 Anthropic 格式）的人（当前网关只稳定支持 Anthropic Messages）。
 
