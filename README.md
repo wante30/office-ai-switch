@@ -11,6 +11,14 @@
 ![ui](https://img.shields.io/badge/UI-WinForms-success)
 ![status](https://img.shields.io/badge/status-active-green)
 
+## Download
+
+Windows 用户可以直接下载 Release 包：
+
+[OfficeAISwitch-v2.0.0-win-x64.zip](https://github.com/wante30/office-ai-switch/releases/download/v2.0.0/OfficeAISwitch-v2.0.0-win-x64.zip)
+
+解压后双击 `OfficeAISwitch.exe`。首次启动会自动创建本地 Python 虚拟环境并安装网关依赖。
+
 ## Screenshots
 
 | Provider switcher | Word |
