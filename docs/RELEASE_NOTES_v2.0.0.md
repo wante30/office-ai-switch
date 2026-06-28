@@ -51,3 +51,10 @@ On first run, the launcher creates a local Python virtual environment under `gat
 This release focuses on Anthropic-compatible Messages API endpoints. OpenAI/Gemini-native protocol conversion is not yet a stable public feature.
 
 Do not upload real `.env`, API keys, gateway tokens, personal manifest files, or Cloudflare tunnel credentials.
+
+## Source And Credits
+
+- Original gateway reference: [Komikawayi/excel-claude-deepseek-gateway-kit](https://github.com/Komikawayi/excel-claude-deepseek-gateway-kit)
+- Web framework: [FastAPI](https://fastapi.tiangolo.com/)
+- API protocol reference: [Anthropic Messages API](https://docs.anthropic.com/)
+- Public gateway option: [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
