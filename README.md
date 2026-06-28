@@ -19,7 +19,7 @@ Windows 用户可以直接下载 Release 包：
 
 解压后双击 `OfficeAISwitch.exe`。首次启动会自动创建本地 Python 虚拟环境并安装网关依赖。
 
-首次使用、导出 manifest.xml、导入 Word / Excel / PowerPoint 的步骤见 [USER_GUIDE.md](USER_GUIDE.md)。本次改动记录见 [CHANGELOG.md](CHANGELOG.md)。
+首次使用、导出 manifest.xml、导入 Word / Excel / PowerPoint 的步骤见 [USER_GUIDE.md](USER_GUIDE.md)。
 
 没有自有域名也可以先试用：本机网关启动后，用 `cloudflared tunnel --url http://127.0.0.1:8790` 生成临时 `trycloudflare.com` HTTPS 地址，再把它填进 manifest。详细步骤见 [docs/GATEWAY_SETUP.md](docs/GATEWAY_SETUP.md#41-没有域名时临时-trycloudflare-试用)。
 
