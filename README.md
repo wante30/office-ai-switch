@@ -69,6 +69,7 @@ Windows 用户可以直接下载 Release 包：
 ---
 
 ## 2. 架构总览
+<img width="1536" height="918" alt="image" src="https://github.com/user-attachments/assets/e99e8ca4-9de9-4ef6-9fcd-a43830671ec1" />
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
