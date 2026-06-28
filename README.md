@@ -425,12 +425,8 @@ pytest tests/ -v
 这个项目是在现有 Claude / Anthropic 兼容网关思路上整理出来的 Office 场景工具，核心目标是把 Word、Excel、PowerPoint 里的 Claude 加载项接到可切换的本地网关。
 
 - 原始网关参考：[Komikawayi/excel-claude-deepseek-gateway-kit](https://github.com/Komikawayi/excel-claude-deepseek-gateway-kit)。
-- Web 框架：[FastAPI](https://fastapi.tiangolo.com/)。
-- API 协议参考：[Anthropic Messages API](https://docs.anthropic.com/)。
 - 公网入口：[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)。
 - 上游模型与中转服务：DeepSeek、Kimi、MiMo、MiniMax、OpenRouter、SiliconFlow、AiHubMix、DMXAPI 等。
-
-如果要提交改动，请不要把真实 `.env`、API Key、运行日志、Office manifest token 或 Cloudflare tunnel credential 放进仓库。
 
 ---
 
