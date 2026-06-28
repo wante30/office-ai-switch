@@ -2,9 +2,6 @@
 
 本文讲清楚 Office AI Switch 背后的网关链路，适合开源用户从零搭建自己的 Claude for Microsoft Office 第三方 API 网关。它适用于 Word、Excel 和 PowerPoint，因为示例 manifest 同时声明了 `Document`、`Workbook`、`Presentation` 三类 Office Host。
 
-> [!warning]
-> 不要把真实 API Key、`GATEWAY_ACCESS_TOKEN`、Cloudflare tunnel credential、`.env`、`secrets.json` 提交到 GitHub。
-
 ## 1. 整体链路
 
 ```text
