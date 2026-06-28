@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from ctypes import wintypes
@@ -37,6 +38,7 @@ CLOUDFLARED_CONFIG = Path(os.environ["USERPROFILE"]) / ".cloudflared" / "config.
 TUNNEL_NAME = "word-deepseek"
 LOCAL_PORT = 8790
 UI_PORT = 8791
+PLACEHOLDER_PUBLIC_URL = "https://word.example.com"
 
 SCHEMA_VERSION = 3
 WORD_ALIASES = ("opus", "sonnet", "haiku")
@@ -74,7 +76,7 @@ PUBLIC_URL = (
     or _read_env_file_value(ENV_FILE, "OFFICE_AI_PUBLIC_URL")
     or _read_env_file_value(ENV_FILE, "WORD_AI_PUBLIC_URL")
     or _read_cloudflared_public_url(CLOUDFLARED_CONFIG)
-    or "https://word.example.com"
+    or PLACEHOLDER_PUBLIC_URL
 ).rstrip("/")
 
 
@@ -1421,6 +1423,42 @@ def cmd_profile_delete(args: argparse.Namespace) -> None:
     }, ensure_ascii=False, indent=2))
 
 
+def cmd_profile_export_manifest(args: argparse.Namespace) -> None:
+    """根据指定 profile 生成 Office 插件 manifest.xml。"""
+    profile = require_profile(args.id)
+    token = read_dotenv_value("GATEWAY_ACCESS_TOKEN")
+    if not token:
+        token = _secrets.token_urlsafe(32)
+        write_dotenv_updates({"GATEWAY_ACCESS_TOKEN": token})
+
+    gateway_url = args.url
+    if not gateway_url:
+        gateway_url = PUBLIC_URL if PUBLIC_URL != PLACEHOLDER_PUBLIC_URL else f"http://127.0.0.1:{LOCAL_PORT}"
+    api_format = profile.get("apiFormat", "anthropic") or "anthropic"
+
+    template_path = ROOT / "word-deepseek-manifest.example.xml"
+    if not template_path.exists():
+        raise SystemExit(f"Manifest 模板不存在：{template_path}")
+
+    manifest = template_path.read_text(encoding="utf-8")
+    new_id = str(uuid.uuid4())
+    manifest = re.sub(r"<Id>[^<]*</Id>", f"<Id>{new_id}</Id>", manifest)
+
+    encoded_url = urllib.parse.quote(gateway_url, safe="")
+    manifest = re.sub(r"gateway_url=[^&\"]*", f"gateway_url={encoded_url}", manifest)
+    manifest = re.sub(r"gateway_token=[^&\"]*", f"gateway_token={token}", manifest)
+    manifest = re.sub(r"gateway_api_format=[^&\"]*", f"gateway_api_format={api_format}", manifest)
+
+    output_path = Path(args.output) if args.output else Path.cwd() / f"word-deepseek-manifest-{profile['id']}.xml"
+    output_path.write_text(manifest, encoding="utf-8")
+    print(json.dumps({
+        "ok": True,
+        "path": str(output_path.resolve()),
+        "gatewayUrl": gateway_url,
+        "apiFormat": api_format,
+    }, ensure_ascii=False, indent=2))
+
+
 def cmd_secret_save(args: argparse.Namespace) -> None:
     profile = require_profile(args.id)
     if args.stdin:
@@ -1982,6 +2020,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_delete = profile_sub.add_parser("delete")
     p_delete.add_argument("id")
     p_delete.set_defaults(func=cmd_profile_delete)
+
+    p_export = profile_sub.add_parser("export-manifest")
+    p_export.add_argument("id")
+    p_export.add_argument("--url", help="Gateway URL（默认：公网入口或本地 http://127.0.0.1:8790）")
+    p_export.add_argument("--output", "-o", help="输出 XML 路径（默认：当前目录 word-deepseek-manifest-<id>.xml）")
+    p_export.set_defaults(func=cmd_profile_export_manifest)
 
     # --- secret group ---
     secret = sub.add_parser("secret")

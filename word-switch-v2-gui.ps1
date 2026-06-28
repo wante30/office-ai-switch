@@ -38,6 +38,7 @@ if (-not (Test-Path $Python)) { $Python = "python" }
 $Backend = Join-Path $Root "word-switch-v2.py"
 $StateDir = Join-Path $env:USERPROFILE ".word-switch-v2"
 $StateFile = Join-Path $StateDir "state.json"
+$WelcomeFile = Join-Path $StateDir "welcome-shown.json"
 
 # 统一字体（Microsoft YaHei UI 保证中文显示）
 $FontUi = [System.Drawing.Font]::new("Microsoft YaHei UI", 9)
@@ -163,6 +164,9 @@ function Invoke-Background([hashtable]$Payload, [string]$Tag = "job") {
             "delete-profile" {
                 $result = Run-Python @("profile", "delete", $Payload.Id)
             }
+            "export-manifest" {
+                $result = Run-Python @("profile", "export-manifest", $Payload.Id)
+            }
             "batch-test" {
                 $results = @()
                 $idsStr = [string]$Payload.IdsStr
@@ -226,7 +230,7 @@ $sidebar.Controls.Add($sidebarAccent)
 $brand = [System.Windows.Forms.Label]::new()
 $brand.Text = "WORD AI SWITCH"
 $brand.Location = [System.Drawing.Point]::new(20, 24)
-$brand.Size = [System.Drawing.Size]::new(320, 30)
+$brand.Size = [System.Drawing.Size]::new(270, 30)
 $brand.Font = $FontBrand
 $brand.ForeColor = $ColorWhite
 $brand.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
@@ -240,6 +244,23 @@ $subtitle.ForeColor = $ColorTextSub
 $subtitle.Font = $FontUi
 $subtitle.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $sidebar.Controls.Add($subtitle)
+
+$helpButton = [System.Windows.Forms.Button]::new()
+$helpButton.Text = "?"
+$helpButton.Location = [System.Drawing.Point]::new(308, 22)
+$helpButton.Size = [System.Drawing.Size]::new(36, 34)
+$helpButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$helpButton.FlatAppearance.BorderSize = 0
+$helpButton.BackColor = $ColorAccent
+$helpButton.ForeColor = $ColorWhite
+$helpButton.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 12, [System.Drawing.FontStyle]::Bold)
+$helpButton.Cursor = [System.Windows.Forms.Cursors]::Hand
+$helpButton.Add_Click({ Open-UserGuide })
+$helpButton.BringToFront()
+$sidebar.Controls.Add($helpButton)
+
+$helpTooltip = [System.Windows.Forms.ToolTip]::new()
+$helpTooltip.SetToolTip($helpButton, "查看帮助说明")
 
 $divider = [System.Windows.Forms.Panel]::new()
 $divider.Location = [System.Drawing.Point]::new(20, 90)
@@ -358,12 +379,6 @@ $startButton.ForeColor = $ColorWhite
 $startButton.Font = $FontUiBold
 $startButton.Cursor = [System.Windows.Forms.Cursors]::Hand
 $sidebarBottom.Controls.Add($startButton)
-
-# 为侧栏底部按钮统一添加悬停/按下反馈
-foreach ($sbBtn in @($newButton, $refreshButton, $sidebarDeleteButton, $sidebarCopyButton, $startButton)) {
-    $sbBtn.FlatAppearance.MouseOverBackColor = (Shift-Color $sbBtn.BackColor 30)
-    $sbBtn.FlatAppearance.MouseDownBackColor = (Shift-Color $sbBtn.BackColor -30)
-}
 
 # 侧栏底部版权
 $sidebarFooter = [System.Windows.Forms.Label]::new()
@@ -496,6 +511,12 @@ function New-Button([string]$Text, [int]$X, [int]$Y, [int]$Width, [System.Drawin
     return $button
 }
 
+# 为侧栏底部按钮统一添加悬停/按下反馈
+foreach ($sbBtn in @($newButton, $refreshButton, $sidebarDeleteButton, $sidebarCopyButton, $startButton)) {
+    $sbBtn.FlatAppearance.MouseOverBackColor = (Shift-Color $sbBtn.BackColor 30)
+    $sbBtn.FlatAppearance.MouseDownBackColor = (Shift-Color $sbBtn.BackColor -30)
+}
+
 # 表单字段 - 统一两列布局，标签右对齐
 $lblW = 80
 $leftInputX = 100
@@ -584,6 +605,9 @@ $copyButton = New-Button "⧉ 复制配置" 16 336 140 $ColorBtnSecondary
 $batchTestButton = New-Button "⚡ 批量测试" 166 336 140 $ColorBtnSuccess
 $deleteButton = New-Button "× 删除配置" 316 336 140 $ColorBtnDanger
 $detailCard.Controls.AddRange(@($copyButton, $batchTestButton, $deleteButton))
+
+$exportManifestButton = New-Button "↓ 导出 manifest.xml" 16 374 200 $ColorBtnSecondary
+$detailCard.Controls.Add($exportManifestButton)
 
 # Log card — Dock=Bottom 永远贴底
 $logCard = [System.Windows.Forms.Panel]::new()
@@ -706,6 +730,400 @@ function Show-Info([string]$Message) {
     [System.Windows.Forms.MessageBox]::Show($form, $Message, "Word AI Switch v2", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
 }
 
+function Open-UserGuide() {
+    Show-HelpForm
+}
+
+function Show-HelpForm() {
+    $help = [System.Windows.Forms.Form]::new()
+    $help.Text = "使用说明"
+    $help.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $help.ClientSize = [System.Drawing.Size]::new(560, 460)
+    $help.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $help.MaximizeBox = $false
+    $help.MinimizeBox = $false
+    $help.BackColor = $ColorPanelLight
+    $help.Font = $FontUi
+
+    $title = [System.Windows.Forms.Label]::new()
+    $title.Text = "Word AI Switch v2 使用说明"
+    $title.Location = [System.Drawing.Point]::new(20, 16)
+    $title.Size = [System.Drawing.Size]::new(520, 28)
+    $title.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 13, [System.Drawing.FontStyle]::Bold)
+    $title.ForeColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
+    $help.Controls.Add($title)
+
+    # 左侧切换按钮区
+    $btnPanel = [System.Windows.Forms.Panel]::new()
+    $btnPanel.Location = [System.Drawing.Point]::new(20, 52)
+    $btnPanel.Size = [System.Drawing.Size]::new(120, 350)
+    $btnPanel.BackColor = $ColorPanelLight
+    $help.Controls.Add($btnPanel)
+
+    $rtb = [System.Windows.Forms.RichTextBox]::new()
+    $rtb.Location = [System.Drawing.Point]::new(150, 52)
+    $rtb.Size = [System.Drawing.Size]::new(390, 350)
+    $rtb.ReadOnly = $true
+    $rtb.ScrollBars = [System.Windows.Forms.RichTextBoxScrollBars]::Vertical
+    $rtb.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 10)
+    $rtb.ForeColor = [System.Drawing.Color]::FromArgb(51, 65, 85)
+    $rtb.BackColor = $ColorPanelLight
+    $rtb.BorderStyle = [System.Windows.Forms.BorderStyle]::None
+    $help.Controls.Add($rtb)
+
+    $fontH1 = [System.Drawing.Font]::new("Microsoft YaHei UI", 14, [System.Drawing.FontStyle]::Bold)
+    $fontBody = [System.Drawing.Font]::new("Microsoft YaHei UI", 10)
+    $fontBold = [System.Drawing.Font]::new("Microsoft YaHei UI", 10, [System.Drawing.FontStyle]::Bold)
+    $cTitle = [System.Drawing.Color]::FromArgb(15, 23, 42)
+    $cText = [System.Drawing.Color]::FromArgb(71, 85, 105)
+    $cActive = $ColorAccent
+    $cInactive = [System.Drawing.Color]::FromArgb(226, 232, 240)
+
+    $helpTabs = @(
+        @{ Text = "本地使用"; Key = "local" },
+        @{ Text = "远程使用"; Key = "remote" },
+        @{ Text = "常见问题"; Key = "faq" }
+    )
+    $tabButtons = @()
+    $activeTab = "local"
+
+    function Add-HelpLine([System.Windows.Forms.RichTextBox]$Box, [string]$Text, [System.Drawing.Font]$Font, [System.Drawing.Color]$Color, [int]$TopPadding = 0) {
+        if ($TopPadding -gt 0) {
+            $Box.SelectionFont = [System.Drawing.Font]::new("Microsoft YaHei UI", $TopPadding / 2)
+            $Box.AppendText("`n")
+        }
+        $Box.SelectionFont = $Font
+        $Box.SelectionColor = $Color
+        $Box.AppendText($Text + "`n")
+    }
+
+    function Set-HelpContent([string]$Key) {
+        $rtb.Clear()
+        switch ($Key) {
+            "local" {
+                Add-HelpLine $rtb "本地使用（无需公网）" $fontH1 $cTitle
+                Add-HelpLine $rtb "" $fontBody $cText 10
+
+                Add-HelpLine $rtb "1. 启动网关" $fontBold $cTitle
+                Add-HelpLine $rtb "   点击左侧「▶ 启动 / 修复 网关」，本地服务会运行在 127.0.0.1:8790。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "2. 配置 Profile" $fontBold $cTitle
+                Add-HelpLine $rtb "   点击「+ 新建配置」，填写名称、Base URL、API 格式、模型映射，然后保存。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 6
+                Add-HelpLine $rtb "   也可以先填好名称和 Base URL，再点「⚙ 自动配置」，系统会根据模型名自动推荐映射。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "3. 保存 API Key" $fontBold $cTitle
+                Add-HelpLine $rtb "   在「API Key」框填入上游 Key，点击「保存 Key」。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "4. 应用网关" $fontBold $cTitle
+                Add-HelpLine $rtb "   选中配置后点击「➜ 应用网关」。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "5. 导出 manifest.xml" $fontBold $cTitle
+                Add-HelpLine $rtb "   点击「↓ 导出 manifest.xml」，导出后文件夹会自动打开。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "6. 导入 Word" $fontBold $cTitle
+                Add-HelpLine $rtb "   Word → 插入 → 获取加载项 → 我的加载项 → 上传我的加载项，选择导出的 XML。" $fontBody $cText
+            }
+            "remote" {
+                Add-HelpLine $rtb "远程 / 多机使用" $fontH1 $cTitle
+                Add-HelpLine $rtb "" $fontBody $cText 10
+
+                Add-HelpLine $rtb "需要公网入口" $fontBold $cTitle
+                Add-HelpLine $rtb "   如果 Word 和本软件不在同一台电脑，或者想在外网使用，需要先配置 cloudflared tunnel。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "1. 安装 cloudflared" $fontBold $cTitle
+                Add-HelpLine $rtb "   下载 cloudflared.exe 放到 %USERPROFILE% 目录。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "2. 创建 tunnel" $fontBold $cTitle
+                Add-HelpLine $rtb "   运行 cloudflared tunnel login 登录，然后 cloudflared tunnel create word-deepseek 创建。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "3. 配置 config.yml" $fontBold $cTitle
+                Add-HelpLine $rtb "   在 %USERPROFILE%\.cloudflared\config.yml 中配置 tunnel 和域名。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "4. 启动并导出" $fontBold $cTitle
+                Add-HelpLine $rtb "   GUI 会自动启动 tunnel，此时导出 manifest.xml 会使用公网 URL。" $fontBody $cText
+            }
+            "faq" {
+                Add-HelpLine $rtb "常见问题" $fontH1 $cTitle
+                Add-HelpLine $rtb "" $fontBody $cText 10
+
+                Add-HelpLine $rtb "Q：导出的 XML 是什么？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：Office 插件清单，Word 靠它知道插件入口地址和 gateway 地址。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：gateway_token 会变吗？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：第一次导出时自动生成并保存到 .env，之后固定不变。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：没有 tunnel 能用吗？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：能，只要 Word 和本软件在同一台电脑即可。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：修改 profile 后要重新导出 XML 吗？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：改了模型或 Key 不需要；改了 API 格式或 gateway URL 建议重新导出。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：GUI 打开后中文乱码怎么办？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：确认脚本以 UTF-8 保存。PowerShell 5.1 下若仍乱码，先执行 chcp 65001 再启动。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：保存 API Key 后测试仍提示「未保存 Key」？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：确认点的是「保存 Key」而不是「保存配置」。secrets.json 是 DPAPI 加密的，换机器后需重新保存。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：「应用到 Word 网关」失败？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：常见原因：端口 8790 被占用、.venv 损坏、cloudflared.exe 不在 %USERPROFILE% 下。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：Office 加载项打不开 / 显示空白？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：用 start-word-fixed.ps1 清理缓存，确认 manifest 里的 SourceLocation 指向正确域名，并完全退出 Office 后重开。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：批量测试全部失败？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：确认所有 profile 都已保存 Key；单个测试确认上游连通；检查本地网络/DNS。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：公网入口测试失败但本地测试通过？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：检查 cloudflared 是否启动、Cloudflare DNS 是否指向当前 tunnel、config.yml 是否配置正确。" $fontBody $cText
+                Add-HelpLine $rtb "" $fontBody $cText 8
+
+                Add-HelpLine $rtb "Q：自动配置可靠吗？" $fontBold $cTitle
+                Add-HelpLine $rtb "A：自动配置会根据模型名推荐映射，但不同上游的模型名可能不标准，推荐后建议再检查一遍。" $fontBody $cText
+            }
+        }
+        $rtb.SelectionStart = 0
+        $rtb.ScrollToCaret()
+    }
+
+    function Update-TabButtons() {
+        for ($i = 0; $i -lt $tabButtons.Count; $i++) {
+            $btn = $tabButtons[$i]
+            $key = $helpTabs[$i].Key
+            if ($key -eq $activeTab) {
+                $btn.BackColor = $cActive
+                $btn.ForeColor = $ColorWhite
+            } else {
+                $btn.BackColor = $cInactive
+                $btn.ForeColor = $cTitle
+            }
+        }
+    }
+
+    for ($i = 0; $i -lt $helpTabs.Count; $i++) {
+        $tab = $helpTabs[$i]
+        $btn = [System.Windows.Forms.Button]::new()
+        $btn.Text = $tab.Text
+        $btn.Location = [System.Drawing.Point]::new(0, $i * 42)
+        $btn.Size = [System.Drawing.Size]::new(110, 36)
+        $btn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+        $btn.FlatAppearance.BorderSize = 0
+        $btn.Font = $FontUiBold
+        $btn.Cursor = [System.Windows.Forms.Cursors]::Hand
+        $btn.Tag = $tab.Key
+        $btn.Add_Click({
+            $activeTab = $this.Tag
+            Set-HelpContent $activeTab
+            Update-TabButtons
+        })
+        $tabButtons += $btn
+        $btnPanel.Controls.Add($btn)
+    }
+
+    Set-HelpContent "local"
+    Update-TabButtons
+
+    $okBtn = [System.Windows.Forms.Button]::new()
+    $okBtn.Text = "知道了"
+    $okBtn.Location = [System.Drawing.Point]::new(440, 412)
+    $okBtn.Size = [System.Drawing.Size]::new(100, 32)
+    $okBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $okBtn.FlatAppearance.BorderSize = 0
+    $okBtn.BackColor = $ColorBtnPrimary
+    $okBtn.ForeColor = $ColorWhite
+    $okBtn.Font = $FontUiBold
+    $okBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $okBtn.DialogResult = [System.Windows.Forms.DialogResult]::OK
+    $help.Controls.Add($okBtn)
+    $help.AcceptButton = $okBtn
+
+    [void]$help.ShowDialog($form)
+}
+
+function Get-WelcomeState() {
+    if (Test-Path $WelcomeFile) {
+        try {
+            $json = Get-Content $WelcomeFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            return ([bool]$json.welcomeShown) -or ([bool]$json.doNotShowAgain)
+        } catch { return $false }
+    }
+    return $false
+}
+
+function Set-WelcomeState([bool]$DoNotShowAgain) {
+    $dir = Split-Path -Parent $WelcomeFile
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $exportGuideState = Get-ExportGuideState
+    @{
+        welcomeShown = $true
+        doNotShowAgain = $DoNotShowAgain
+        doNotShowExportGuide = $exportGuideState
+    } | ConvertTo-Json -Compress | Set-Content $WelcomeFile -Encoding UTF8
+}
+
+function Show-WelcomeForm() {
+    if (Get-WelcomeState) { return }
+
+    $welcome = [System.Windows.Forms.Form]::new()
+    $welcome.Text = "欢迎使用 Word AI Switch v2"
+    $welcome.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $welcome.ClientSize = [System.Drawing.Size]::new(480, 320)
+    $welcome.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $welcome.MaximizeBox = $false
+    $welcome.MinimizeBox = $false
+    $welcome.BackColor = $ColorPanelLight
+    $welcome.Font = $FontUi
+
+    $title = [System.Windows.Forms.Label]::new()
+    $title.Text = "欢迎使用 Word AI Switch v2"
+    $title.Location = [System.Drawing.Point]::new(20, 18)
+    $title.Size = [System.Drawing.Size]::new(440, 28)
+    $title.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 13, [System.Drawing.FontStyle]::Bold)
+    $title.ForeColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
+    $welcome.Controls.Add($title)
+
+    $body = [System.Windows.Forms.Label]::new()
+    $body.Text = "本地使用只需 4 步：`r`n`r`n1. 点「▶ 启动 / 修复 网关」启动本地服务`r`n2. 新建/选中 profile，填写 Base URL、API 格式、模型映射`r`n3. 保存 Key 后点「➜ 应用网关」`r`n4. 点「↓ 导出 manifest.xml」，然后导入 Word`r`n`r`n远程使用需先配置 cloudflared tunnel，详见说明文档。"
+    $body.Location = [System.Drawing.Point]::new(20, 56)
+    $body.Size = [System.Drawing.Size]::new(440, 150)
+    $body.Font = $FontUi
+    $body.ForeColor = [System.Drawing.Color]::FromArgb(71, 85, 105)
+    $welcome.Controls.Add($body)
+
+    $chk = [System.Windows.Forms.CheckBox]::new()
+    $chk.Text = "下次启动不再显示"
+    $chk.Location = [System.Drawing.Point]::new(20, 220)
+    $chk.Size = [System.Drawing.Size]::new(200, 24)
+    $chk.Font = $FontUi
+    $chk.ForeColor = [System.Drawing.Color]::FromArgb(71, 85, 105)
+    $welcome.Controls.Add($chk)
+
+    $guideBtn = [System.Windows.Forms.Button]::new()
+    $guideBtn.Text = "查看完整说明"
+    $guideBtn.Location = [System.Drawing.Point]::new(240, 260)
+    $guideBtn.Size = [System.Drawing.Size]::new(110, 32)
+    $guideBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $guideBtn.FlatAppearance.BorderSize = 0
+    $guideBtn.BackColor = $ColorBtnSecondary
+    $guideBtn.ForeColor = $ColorWhite
+    $guideBtn.Font = $FontUiBold
+    $guideBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $guideBtn.Add_Click({ Open-UserGuide })
+    $welcome.Controls.Add($guideBtn)
+
+    $okBtn = [System.Windows.Forms.Button]::new()
+    $okBtn.Text = "知道了"
+    $okBtn.Location = [System.Drawing.Point]::new(360, 260)
+    $okBtn.Size = [System.Drawing.Size]::new(100, 32)
+    $okBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $okBtn.FlatAppearance.BorderSize = 0
+    $okBtn.BackColor = $ColorBtnPrimary
+    $okBtn.ForeColor = $ColorWhite
+    $okBtn.Font = $FontUiBold
+    $okBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $okBtn.DialogResult = [System.Windows.Forms.DialogResult]::OK
+    $welcome.Controls.Add($okBtn)
+    $welcome.AcceptButton = $okBtn
+
+    [void]$welcome.ShowDialog($form)
+    Set-WelcomeState $chk.Checked
+}
+
+function Get-ExportGuideState() {
+    if (Test-Path $WelcomeFile) {
+        try {
+            $json = Get-Content $WelcomeFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            return [bool]$json.doNotShowExportGuide
+        } catch { return $false }
+    }
+    return $false
+}
+
+function Set-ExportGuideState([bool]$DoNotShowAgain) {
+    $dir = Split-Path -Parent $WelcomeFile
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $welcomeState = Get-WelcomeState
+    $state = @{
+        welcomeShown = $welcomeState
+        doNotShowAgain = $welcomeState
+        doNotShowExportGuide = $DoNotShowAgain
+    }
+    $state | ConvertTo-Json -Compress | Set-Content $WelcomeFile -Encoding UTF8
+}
+
+function Show-ExportManifestGuide([string]$Path) {
+    if (Get-ExportGuideState) { return }
+
+    $guide = [System.Windows.Forms.Form]::new()
+    $guide.Text = "manifest.xml 导出成功"
+    $guide.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $guide.ClientSize = [System.Drawing.Size]::new(520, 260)
+    $guide.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $guide.MaximizeBox = $false
+    $guide.MinimizeBox = $false
+    $guide.BackColor = $ColorPanelLight
+    $guide.Font = $FontUi
+
+    $title = [System.Windows.Forms.Label]::new()
+    $title.Text = "manifest.xml 已导出"
+    $title.Location = [System.Drawing.Point]::new(20, 18)
+    $title.Size = [System.Drawing.Size]::new(480, 28)
+    $title.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 13, [System.Drawing.FontStyle]::Bold)
+    $title.ForeColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
+    $guide.Controls.Add($title)
+
+    $body = [System.Windows.Forms.Label]::new()
+    $body.Text = "文件已保存到：`r`n$Path`r`n`r`n下一步操作：`r`n1. 保持本软件运行（本地 gateway 正在运行）`r`n2. 打开 Word → 插入 → 获取加载项 → 我的加载项`r`n3. 选择「上传我的加载项」，选中刚导出的 XML 文件`r`n4. Word 工具栏出现 Claude 按钮，点击即可使用"
+    $body.Location = [System.Drawing.Point]::new(20, 56)
+    $body.Size = [System.Drawing.Size]::new(480, 130)
+    $body.Font = $FontUi
+    $body.ForeColor = [System.Drawing.Color]::FromArgb(71, 85, 105)
+    $guide.Controls.Add($body)
+
+    $chk = [System.Windows.Forms.CheckBox]::new()
+    $chk.Text = "下次导出不再提示"
+    $chk.Location = [System.Drawing.Point]::new(20, 196)
+    $chk.Size = [System.Drawing.Size]::new(200, 24)
+    $chk.Font = $FontUi
+    $chk.ForeColor = [System.Drawing.Color]::FromArgb(71, 85, 105)
+    $guide.Controls.Add($chk)
+
+    $okBtn = [System.Windows.Forms.Button]::new()
+    $okBtn.Text = "知道了"
+    $okBtn.Location = [System.Drawing.Point]::new(400, 196)
+    $okBtn.Size = [System.Drawing.Size]::new(100, 32)
+    $okBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $okBtn.FlatAppearance.BorderSize = 0
+    $okBtn.BackColor = $ColorBtnPrimary
+    $okBtn.ForeColor = $ColorWhite
+    $okBtn.Font = $FontUiBold
+    $okBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $okBtn.DialogResult = [System.Windows.Forms.DialogResult]::OK
+    $guide.Controls.Add($okBtn)
+    $guide.AcceptButton = $okBtn
+
+    [void]$guide.ShowDialog($form)
+    Set-ExportGuideState $chk.Checked
+}
+
 function Get-CurrentProfile {
     if (-not $script:SelectedId) { return $null }
     foreach ($p in $script:Profiles) {
@@ -734,8 +1152,8 @@ function Render-ProfileList {
         $isActive = ([string]$p.id -eq $script:ActiveId)
         $isSelected = ([string]$p.id -eq $script:SelectedId)
         $card = [System.Windows.Forms.Panel]::new()
-        $card.Location = [System.Drawing.Point]::new(4, $y)
-        $card.Size = [System.Drawing.Size]::new(320, 78)
+        $card.Location = [System.Drawing.Point]::new(8, $y)
+        $card.Size = [System.Drawing.Size]::new(300, 78)
         $card.BackColor = if ($isActive) { $ColorCardActive } else { $ColorCard }
         $card.Cursor = [System.Windows.Forms.Cursors]::Hand
         $card.Tag = [string]$p.id
@@ -759,8 +1177,8 @@ function Render-ProfileList {
 
         $activeBadge = [System.Windows.Forms.Label]::new()
         $activeBadge.Text = if ($isActive) { "● 已启用" } else { "" }
-        $activeBadge.Location = [System.Drawing.Point]::new(210, 11)
-        $activeBadge.Size = [System.Drawing.Size]::new(96, 18)
+        $activeBadge.Location = [System.Drawing.Point]::new(190, 11)
+        $activeBadge.Size = [System.Drawing.Size]::new(90, 18)
         $activeBadge.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 8, [System.Drawing.FontStyle]::Bold)
         $activeBadge.ForeColor = $ColorSuccess
         $activeBadge.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -771,7 +1189,7 @@ function Render-ProfileList {
         $idLbl = [System.Windows.Forms.Label]::new()
         $idLbl.Text = [string]$p.id
         $idLbl.Location = [System.Drawing.Point]::new(14, 31)
-        $idLbl.Size = [System.Drawing.Size]::new(290, 16)
+        $idLbl.Size = [System.Drawing.Size]::new(270, 16)
         $idLbl.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 8)
         $idLbl.ForeColor = $ColorTextSub
         $idLbl.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -803,8 +1221,8 @@ function Render-ProfileList {
         $routeText = "sonnet → " + [string]$p.routes.sonnet
         $sonnetLbl = [System.Windows.Forms.Label]::new()
         $sonnetLbl.Text = $routeText
-        $sonnetLbl.Location = [System.Drawing.Point]::new(150, 51)
-        $sonnetLbl.Size = [System.Drawing.Size]::new(156, 16)
+        $sonnetLbl.Location = [System.Drawing.Point]::new(140, 51)
+        $sonnetLbl.Size = [System.Drawing.Size]::new(140, 16)
         $sonnetLbl.Font = [System.Drawing.Font]::new("Microsoft YaHei UI", 8)
         $sonnetLbl.ForeColor = $ColorTextSub
         $sonnetLbl.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -829,6 +1247,8 @@ function Render-ProfileList {
         $y += 86
     }
     $profileListPanel.ResumeLayout($true)
+    $profileListPanel.HorizontalScroll.Visible = $false
+    $profileListPanel.HorizontalScroll.Enabled = $false
     $script:LastProfileCount = $script:Profiles.Count
     # 更新计数
     if ($listCountLabel) {
@@ -1138,6 +1558,17 @@ $jobTimer.Add_Tick({
                         Show-Error "删除失败：$err" ""
                     }
                 }
+                "export-manifest" {
+                    $parsed = $result.Output | ConvertFrom-Json
+                    if ($result.ExitCode -eq 0 -and $parsed.ok) {
+                        Log-Line "manifest 已导出：$($parsed.path)"
+                        Show-ExportManifestGuide $parsed.path
+                        try { Start-Process "explorer.exe" -ArgumentList "/select,$($parsed.path)" } catch {}
+                    } else {
+                        $err = if ($parsed.error) { [string]$parsed.error } else { $result.Output }
+                        Show-Error "导出 manifest 失败：$err" ""
+                    }
+                }
                 "batch-test" {
                     $passed = 0; $failed = 0
                     if ([string]::IsNullOrWhiteSpace($result.Output)) {
@@ -1383,7 +1814,21 @@ $batchTestButton.Add_Click({
     Invoke-Background -Payload @{ Action = "batch-test"; IdsStr = $idsStr } -Tag "batch-test"
 })
 
-$form.Add_Shown({ Refresh-All-Async })
+$exportManifestButton.Add_Click({
+    if ($script:Busy) { return }
+    if (-not $script:SelectedId) {
+        Show-Error "请先选中一个 profile。" ""
+        return
+    }
+    Set-Busy "导出 manifest"
+    Log-Line "正在导出 manifest.xml（$($script:SelectedId)）..."
+    Invoke-Background -Payload @{ Action = "export-manifest"; Id = $script:SelectedId } -Tag "export-manifest"
+})
+
+$form.Add_Shown({
+    Show-WelcomeForm
+    Refresh-All-Async
+})
 $form.Add_FormClosing({ $jobTimer.Stop() })
 [void]$form.ShowDialog()
 

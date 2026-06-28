@@ -34,6 +34,8 @@ release/
 
 # local Office/gateway runtime files
 word-deepseek-manifest.xml
+word-deepseek-manifest-*.xml
+!word-deepseek-manifest.example.xml
 start.ps1
 start-word-fixed.ps1
 WORD_AI_SWITCH_V2_REDESIGN.md

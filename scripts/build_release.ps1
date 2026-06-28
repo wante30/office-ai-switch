@@ -55,6 +55,8 @@ Copy-ItemSafe (Join-Path $Root "word-switch-v2-gui.ps1") (Join-Path $PackageDir 
 Copy-ItemSafe (Join-Path $Root "word-deepseek-manifest.example.xml") (Join-Path $PackageDir "word-deepseek-manifest.example.xml")
 Copy-ItemSafe (Join-Path $Root "start.example.ps1") (Join-Path $PackageDir "start.example.ps1")
 Copy-ItemSafe (Join-Path $Root "WORD_AI_SWITCH_V2_README.md") (Join-Path $PackageDir "README.md")
+Copy-ItemSafe (Join-Path $Root "USER_GUIDE.md") (Join-Path $PackageDir "USER_GUIDE.md")
+Copy-ItemSafe (Join-Path $Root "CHANGELOG.md") (Join-Path $PackageDir "CHANGELOG.md")
 Copy-ItemSafe (Join-Path $Root "LICENSE") (Join-Path $PackageDir "LICENSE")
 
 New-Item -ItemType Directory -Path (Join-Path $PackageDir "docs") -Force | Out-Null
@@ -78,9 +80,9 @@ Get-ChildItem -LiteralPath (Join-Path $PackageDir "gateway_unified\src") -Direct
 2. Open this folder and double-click `OfficeAISwitch.exe`.
 3. On first run, the launcher creates `gateway_unified\.venv` and installs gateway dependencies automatically.
 4. In the GUI, create or select a profile, save the API key, test it, then apply it to the gateway.
-5. Configure your Office manifest from `word-deepseek-manifest.example.xml`.
+5. Export your Office manifest from the GUI, then upload the generated XML in Word / Excel / PowerPoint.
 
-For detailed setup, see `docs/GATEWAY_SETUP.md`.
+For detailed setup, see `USER_GUIDE.md` and `docs/GATEWAY_SETUP.md`.
 
 Do not put real API keys or gateway tokens into files that you upload publicly.
 "@ | Set-Content -LiteralPath (Join-Path $PackageDir "QUICK_START.md") -Encoding UTF8
