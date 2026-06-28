@@ -11,6 +11,8 @@
 ![ui](https://img.shields.io/badge/UI-WinForms-success)
 ![status](https://img.shields.io/badge/status-active-green)
 
+
+
 ## Download
 
 Windows 用户可以直接下载 Release 包：
@@ -27,7 +29,7 @@ Windows 用户可以直接下载 Release 包：
 
 | Provider switcher | Word |
 |---|---|
-| ![Office AI Switch GUI](docs/images/office-ai-switch-gui.png) | ![Claude add-in running in Word](docs/images/office-ai-switch-word.png) |
+| <img width="1274" height="844" alt="6acfe9c109edd7d3f9a22c223fc94038" src="https://github.com/user-attachments/assets/4c9aaae8-748f-4993-9797-6f80184993e3" /> | ![Claude add-in running in Word](docs/images/office-ai-switch-word.png) |
 
 | Excel | PowerPoint |
 |---|---|
