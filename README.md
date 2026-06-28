@@ -11,12 +11,6 @@
 ![ui](https://img.shields.io/badge/UI-WinForms-success)
 ![status](https://img.shields.io/badge/status-active-green)
 
-## Author
-
-Created and maintained by [wante30](https://github.com/wante30) / Jingyu Wang.
-
-Co-developed with [Claude Code](https://anthropic.com/claude-code).
-
 ## Screenshots
 
 | Provider switcher | Word |
@@ -320,8 +314,7 @@ excel-claude-deepseek-gateway-kit/
 ├── start.example.ps1               # 可公开的启动脚本模板
 ├── word-deepseek-manifest.example.xml # 可公开的 Office manifest 模板
 ├── docs/
-│   ├── GATEWAY_SETUP.md            # 网关 / Cloudflare / DNS / manifest 配置指南
-│   └── OPEN_SOURCE_RELEASE_CHECKLIST.md
+│   └── GATEWAY_SETUP.md            # 网关 / Cloudflare / DNS / manifest 配置指南
 ├── package.json                    # NPM 包装（可选）
 ├── README.md                       # 网关 README
 └── WORD_AI_SWITCH_V2_README.md     # 本文档
@@ -419,24 +412,20 @@ pytest tests/ -v
 
 ---
 
-## 10. 贡献
+## 10. 来源与致谢
 
-欢迎提 Issue 和 PR。在动手前建议先阅读 [docs/GATEWAY_SETUP.md](docs/GATEWAY_SETUP.md) 和 [docs/OPEN_SOURCE_RELEASE_CHECKLIST.md](docs/OPEN_SOURCE_RELEASE_CHECKLIST.md)，确认网关、manifest、Cloudflare Tunnel 和敏感文件边界。
+这个项目是在现有 Claude / Anthropic 兼容网关思路上整理出来的 Office 场景工具，核心目标是把 Word、Excel、PowerPoint 里的 Claude 加载项接到可切换的本地网关。
 
-- 代码风格：Python 用 `black` + `ruff`；PowerShell 用 `Readability first`。
-- 提交前请跑 `pytest tests/ -v`。
-- 不要把真实 `.env`、API Key、运行日志提交进仓库。
+- 原始网关参考：[Komikawayi/excel-claude-deepseek-gateway-kit](https://github.com/Komikawayi/excel-claude-deepseek-gateway-kit)。
+- Web 框架：[FastAPI](https://fastapi.tiangolo.com/)。
+- API 协议参考：[Anthropic Messages API](https://docs.anthropic.com/)。
+- 公网入口：[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)。
+- 上游模型与中转服务：DeepSeek、Kimi、MiMo、MiniMax、OpenRouter、SiliconFlow、AiHubMix、DMXAPI 等。
+
+如果要提交改动，请不要把真实 `.env`、API Key、运行日志、Office manifest token 或 Cloudflare tunnel credential 放进仓库。
 
 ---
 
 ## 11. 许可证
 
-MIT License。详见 [LICENSE](LICENSE)。
-
----
-
-## 12. 致谢
-
-- [Anthropic](https://www.anthropic.com)：Messages API 协议规范。
-- [Cloudflare](https://www.cloudflare.com)：cloudflared tunnel 提供公网入口。
-- 所有上游供应商：DeepSeek、Kimi、MiMo、MiniMax、OpenRouter、SiliconFlow、AiHubMix、DMXAPI。
+MIT License。详见 [LICENSE](LICENSE)。MIT 是一个宽松的开源许可，主要作用是说明别人可以怎么使用代码，以及作者不对使用结果承担担保责任。
